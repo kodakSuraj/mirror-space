@@ -18,6 +18,7 @@ from diff_encoder import DiffFrameDecoder
 DEFAULT_PORT = 9999
 MAX_PACKET_SIZE = 65507
 RECEIVE_TIMEOUT = 5.0  # seconds
+FRAGMENT_HEADER_SIZE = 12  # total_packets (4) + packet_index (4) + frame_number (4)
 
 
 class UDPReceiver:
@@ -40,6 +41,7 @@ class UDPReceiver:
         self.complete_frames = 0
         self.partial_frames = 0
         self.missing_packets = 0
+        self.dropped_incomplete_frames = 0
         
         print(f"UDP receiver initialized on port {port}")
     
@@ -47,6 +49,7 @@ class UDPReceiver:
         """Receive and reassemble fragmented data"""
         packets: Dict[int, bytes] = {}
         total_packets = 0
+        frame_number: Optional[int] = None
         start_time = time.time()
         source_addr: Optional[Tuple[str, int]] = None
         partial_due_to_timeout = False
@@ -65,17 +68,34 @@ class UDPReceiver:
                 print(f"Receive error: {e}")
                 return None, None, None
             
-            if len(data) < 8:
+            if len(data) < FRAGMENT_HEADER_SIZE:
                 continue  # Too small for header
 
             source_addr = addr
             
             # Parse packet header
-            total, index = struct.unpack('<II', data[:8])
-            payload = data[8:]
-            
-            if total_packets == 0:
+            total, index, packet_frame_number = struct.unpack('<III', data[:FRAGMENT_HEADER_SIZE])
+            payload = data[FRAGMENT_HEADER_SIZE:]
+
+            if total <= 0 or index >= total:
+                continue
+
+            if frame_number is None:
+                frame_number = packet_frame_number
                 total_packets = total
+            elif packet_frame_number != frame_number:
+                # Prefer newer frames for low latency: drop stale partial frame and switch.
+                if packet_frame_number > frame_number:
+                    if packets:
+                        self.partial_frames += 1
+                        self.dropped_incomplete_frames += 1
+                    packets = {}
+                    frame_number = packet_frame_number
+                    total_packets = total
+                continue
+
+            if total != total_packets:
+                continue
             
             # Store packet
             packets[index] = payload
@@ -109,6 +129,7 @@ class UDPReceiver:
             "missing_packets": missing_count,
             "total_packets": total_packets,
             "timed_out": partial_due_to_timeout,
+            "frame_number": frame_number,
         }
 
         return (bytes(result) if result else None), meta, source_addr

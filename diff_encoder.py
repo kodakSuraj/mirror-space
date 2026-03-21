@@ -24,10 +24,12 @@ class DiffFrameEncoder:
         block_size: int = 32,
         threshold: int = 10,
         max_changed_block_ratio: float = 0.30,
+        max_diff_payload_ratio: float = 0.12,
     ):
         self.block_size = block_size
         self.threshold = threshold
         self.max_changed_block_ratio = max_changed_block_ratio
+        self.max_diff_payload_ratio = max_diff_payload_ratio
         self.previous_frame: Optional[np.ndarray] = None
         self.last_frame_number = 0
         self.key_frame_needed = True
@@ -135,8 +137,17 @@ class DiffFrameEncoder:
         if not send_key_frame:
             diff_data = self._encode_diff_frame(frame, frame_number)
 
+            # If raw diff payload is too large, send a full/key frame instead.
+            if self.compression_ratio >= self.max_diff_payload_ratio:
+                self.key_frame_needed = True
+                self.key_frame_reason = (
+                    f"diff_payload_high ratio={self.compression_ratio:.1%} "
+                    f"threshold={self.max_diff_payload_ratio:.1%}"
+                )
+                send_key_frame = True
+
             # Escalate to key frame during high-motion scenes.
-            if self.last_changed_ratio >= self.max_changed_block_ratio:
+            elif self.last_changed_ratio >= self.max_changed_block_ratio:
                 self.key_frame_needed = True
                 self.key_frame_reason = (
                     f"high_motion changed={self.last_changed_ratio:.1%} "
