@@ -11,6 +11,7 @@ import threading
 import platform
 import ipaddress
 import queue
+import math
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple, List
 
@@ -25,12 +26,13 @@ DEFAULT_PORT = 9999
 SERVICE_TYPE = "_mirror-space._udp.local."
 DISCOVERY_BEACON_PORT = 10001
 MAX_PACKET_SIZE = 65507
-RECEIVE_TIMEOUT = 0.05  # seconds
-FRAGMENT_HEADER_SIZE = 12  # total_packets (4) + packet_index (4) + frame_number (4)
+RECEIVE_TIMEOUT = 0.01  # seconds
+FRAGMENT_HEADER_SIZE = 20  # total (4) + index (4) + frame (4) + send_time_ns (8)
 DISCOVERY_INTERVAL_SECONDS = 1.0
-REASSEMBLY_WINDOW_SECONDS = 0.60
+REASSEMBLY_WINDOW_SECONDS = 0.18
 SUBNET_SCAN_INTERVAL_SECONDS = 8.0
 SUBNET_SCAN_BATCH_SIZE = 24
+LATENCY_PING_INTERVAL_SECONDS = 0.50
 
 
 @dataclass
@@ -50,6 +52,25 @@ def _decode_property(raw: Dict[bytes, bytes], key: bytes, default: str = "") -> 
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="ignore")
     return str(value)
+
+
+def _parse_message_tokens(message: str) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    for token in message.split()[1:]:
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        values[key] = value
+    return values
+
+
+def _percentile(values: List[float], p: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    idx = int(math.ceil((p / 100.0) * len(ordered))) - 1
+    idx = max(0, min(idx, len(ordered) - 1))
+    return ordered[idx]
 
 
 def get_local_ipv4_addresses() -> set[str]:
@@ -416,6 +437,10 @@ class UDPReceiver:
     def __init__(self, port: int):
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, 0x10)  # IPTOS_LOWDELAY
+        except OSError:
+            pass
         
         # Bind to all interfaces
         self.sock.bind(('0.0.0.0', port))
@@ -423,8 +448,8 @@ class UDPReceiver:
         # Set receive timeout
         self.sock.settimeout(RECEIVE_TIMEOUT)
         
-        # Increase receive buffer size
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024*1024)
+        # Keep receive buffer moderate to avoid deep queue latency.
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 256 * 1024)
 
         # Packet health statistics
         self.complete_frames = 0
@@ -441,6 +466,7 @@ class UDPReceiver:
         packets: Dict[int, bytes] = {}
         total_packets = 0
         active_frame_number: Optional[int] = None
+        sender_timestamp_ns: Optional[int] = None
         start_time = time.time()
         source_addr: Optional[Tuple[str, int]] = None
         partial_due_to_timeout = False
@@ -483,7 +509,7 @@ class UDPReceiver:
                 continue
             
             # Parse packet header
-            total, index, frame_number = struct.unpack('<III', data[:FRAGMENT_HEADER_SIZE])
+            total, index, frame_number, frame_send_time_ns = struct.unpack('<IIIQ', data[:FRAGMENT_HEADER_SIZE])
             payload = data[FRAGMENT_HEADER_SIZE:]
 
             if total <= 0 or index >= total:
@@ -495,6 +521,7 @@ class UDPReceiver:
                     continue
                 active_frame_number = frame_number
                 total_packets = total
+                sender_timestamp_ns = frame_send_time_ns
             elif frame_number != active_frame_number:
                 continue
             elif total != total_packets:
@@ -534,6 +561,7 @@ class UDPReceiver:
             "total_packets": total_packets,
             "timed_out": partial_due_to_timeout,
             "frame_number": active_frame_number,
+            "sender_timestamp_ns": sender_timestamp_ns,
         }
 
         # Never decode partial payloads; wait for a complete frame to keep decoder state valid.
@@ -553,6 +581,8 @@ class FeedbackSender:
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.sock.bind(("0.0.0.0", 0))
+        self.sock.setblocking(False)
         self.last_send_time: Dict[str, float] = {}
 
     def send(
@@ -578,6 +608,21 @@ class FeedbackSender:
 
     def close(self):
         self.sock.close()
+
+    def poll_messages(self, max_messages: int = 8) -> List[Tuple[str, Tuple[str, int]]]:
+        messages: List[Tuple[str, Tuple[str, int]]] = []
+        for _ in range(max_messages):
+            try:
+                data, addr = self.sock.recvfrom(1024)
+            except BlockingIOError:
+                break
+            except Exception:
+                break
+
+            message = data.decode("utf-8", errors="ignore").strip()
+            if message:
+                messages.append((message, addr))
+        return messages
 
 
 class TerminalSelectionReader:
@@ -660,9 +705,13 @@ def main():
         
         # Receiving loop
         frames_received = 0
+        last_measured_receive_fps = 0.0
         fps_start_time = time.time()
         health_window_start = time.time()
         window_partial_frames = 0
+        window_complete_frames = 0
+        window_meta_frames = 0
+        window_timed_out_frames = 0
         window_missing_packets = 0
         window_total_packets = 0
         sender_ip: Optional[str] = None
@@ -680,6 +729,11 @@ def main():
         latest_streams: List[StreamInfoRecord] = []
         waiting_for_manual_selection_logged = False
         waiting_for_access_id_logged = False
+        frame_latency_window_ms: List[float] = []
+        frame_latency_last_ms: Optional[float] = None
+        rtt_window_ms: List[float] = []
+        rtt_last_ms: Optional[float] = None
+        last_latency_ping_time = 0.0
         
         print("Waiting for frames...\n")
         
@@ -780,6 +834,35 @@ def main():
                     print("Connection Debug: waiting for Session Access ID in terminal")
                     waiting_for_access_id_logged = True
 
+            # Measure feedback channel RTT continuously.
+            now = time.time()
+            if selected_stream_ip and selected_stream_feedback_port and now - last_latency_ping_time >= LATENCY_PING_INTERVAL_SECONDS:
+                ping_ts_ns = time.time_ns()
+                feedback.send(
+                    selected_stream_ip,
+                    selected_stream_feedback_port,
+                    f"LATENCY_PING ts_ns={ping_ts_ns}",
+                    throttle_seconds=0.0,
+                    throttle_key="LATENCY_PING",
+                )
+                last_latency_ping_time = now
+
+            for message, _ in feedback.poll_messages():
+                if not message.startswith("LATENCY_PONG"):
+                    continue
+                fields = _parse_message_tokens(message)
+                raw_ts = fields.get("ts_ns")
+                if not raw_ts:
+                    continue
+                try:
+                    sent_ping_ns = int(raw_ts)
+                except ValueError:
+                    continue
+                rtt_ms = (time.time_ns() - sent_ping_ns) / 1_000_000.0
+                if 0.0 <= rtt_ms <= 60_000.0:
+                    rtt_last_ms = rtt_ms
+                    rtt_window_ms.append(rtt_ms)
+
             # Receive data
             expected_source_ip = selected_stream_ip
             if selected_stream_ip in local_ips:
@@ -803,35 +886,78 @@ def main():
                 if decode_error and sender_ip:
                     feedback.send(
                         sender_ip,
-                        port + 1,
+                        selected_stream_feedback_port or (port + 1),
                         f"KEYFRAME_REQUEST reason={decode_error}",
                         throttle_seconds=0.2,
                         throttle_key="KEYFRAME_REQUEST",
                     )
                 
                 if frame is not None:
+                    sender_ts_ns = meta.get("sender_timestamp_ns") if meta else None
+                    if isinstance(sender_ts_ns, int):
+                        frame_latency_ms = (time.time_ns() - sender_ts_ns) / 1_000_000.0
+                        if 0.0 <= frame_latency_ms <= 60_000.0:
+                            frame_latency_last_ms = frame_latency_ms
+                            frame_latency_window_ms.append(frame_latency_ms)
+
                     # Display frame
                     cv2.imshow("Mirror-Space Receiver", frame)
                     frames_received += 1
 
             if meta:
+                window_meta_frames += 1
                 window_total_packets += meta.get("total_packets", 0)
                 window_missing_packets += meta.get("missing_packets", 0)
-                if not meta.get("complete", True):
+                if meta.get("complete", True):
+                    window_complete_frames += 1
+                else:
                     window_partial_frames += 1
+                    if meta.get("timed_out", False):
+                        window_timed_out_frames += 1
 
             # Periodically report network instability to force sender key frames.
             health_elapsed = time.time() - health_window_start
-            if health_elapsed >= 2.0:
+            if health_elapsed >= 1.0:
                 packet_loss_ratio = (
                     window_missing_packets / window_total_packets if window_total_packets > 0 else 0.0
                 )
+                partial_ratio = (
+                    window_partial_frames / window_meta_frames if window_meta_frames > 0 else 0.0
+                )
+                timeout_ratio = (
+                    window_timed_out_frames / window_meta_frames if window_meta_frames > 0 else 0.0
+                )
                 unstable = window_partial_frames >= 2 or packet_loss_ratio >= 0.05
+                frame_latency_p50 = _percentile(frame_latency_window_ms, 50.0)
+                frame_latency_p95 = _percentile(frame_latency_window_ms, 95.0)
+                rtt_p50 = _percentile(rtt_window_ms, 50.0)
+                rtt_p95 = _percentile(rtt_window_ms, 95.0)
+
+                if sender_ip:
+                    feedback.send(
+                        sender_ip,
+                        selected_stream_feedback_port or (port + 1),
+                        (
+                            "STREAM_STATS "
+                            f"recv_fps={last_measured_receive_fps:.2f} "
+                            f"packet_loss={packet_loss_ratio:.6f} "
+                            f"partial_ratio={partial_ratio:.6f} "
+                            f"timeout_ratio={timeout_ratio:.6f} "
+                            f"complete_frames={window_complete_frames} "
+                            f"partial_frames={window_partial_frames} "
+                            f"frame_latency_ms_p50={frame_latency_p50:.2f} "
+                            f"frame_latency_ms_p95={frame_latency_p95:.2f} "
+                            f"rtt_ms_p50={rtt_p50:.2f} "
+                            f"rtt_ms_p95={rtt_p95:.2f}"
+                        ),
+                        throttle_seconds=0.2,
+                        throttle_key="STREAM_STATS",
+                    )
 
                 if unstable and sender_ip:
                     feedback.send(
                         sender_ip,
-                        port + 1,
+                        selected_stream_feedback_port or (port + 1),
                         (
                             "NETWORK_UNSTABLE "
                             f"partial_frames={window_partial_frames} "
@@ -842,16 +968,24 @@ def main():
                     )
 
                 window_partial_frames = 0
+                window_complete_frames = 0
+                window_meta_frames = 0
+                window_timed_out_frames = 0
                 window_missing_packets = 0
                 window_total_packets = 0
+                frame_latency_window_ms.clear()
+                rtt_window_ms.clear()
                 health_window_start = time.time()
             
             # Calculate FPS
             elapsed = time.time() - fps_start_time
             if elapsed >= 1.0:
                 actual_fps = frames_received / elapsed
+                last_measured_receive_fps = actual_fps
                 if connected or frames_received > 0:
-                    print(f"Receive FPS: {actual_fps:.1f}")
+                    frame_latency_text = f"frame_ms={frame_latency_last_ms:.1f}" if frame_latency_last_ms is not None else "frame_ms=n/a"
+                    rtt_text = f"rtt_ms={rtt_last_ms:.1f}" if rtt_last_ms is not None else "rtt_ms=n/a"
+                    print(f"Receive FPS: {actual_fps:.1f} | {frame_latency_text} | {rtt_text}")
                 frames_received = 0
                 fps_start_time = time.time()
             
