@@ -409,6 +409,7 @@ Earlier versions had resilience primitives (key-frame forcing), but did not prov
 Aspect & Mirror-Space & Typical Meeting Tool & Conventional VNC-like Setup \\
 \midrule
 Primary optimization & Interactive LAN latency & Internet collaboration & Remote control completeness \\
+Observed runtime latency (2026-04-03) & Frame age: \(\sim 1.33\,\mathrm{s}\), RTT: \(\sim 0.14\,\mathrm{s}\) & Typically lower than this run under stable Internet/LAN paths & Often variable with transport and encoding configuration \\
 Transport style & UDP + app-level recovery & Mixed/managed stack & Often reliability-biased paths \\
 Adaptive controls in this project & FPS + width + compression + key-frame forcing & Typically opaque to end-user & Usually limited/tuned differently \\
 Setup weight & Lightweight scripts & Full client ecosystem & Service + configuration overhead \\
@@ -441,6 +442,8 @@ Setup weight & Lightweight scripts & Full client ecosystem & Service + configura
 \caption{Indicative comparative latency ranges adapted from project notes and positioning documents.}
 \label{fig:latencybar}
 \end{figure}
+
+\noindent\textbf{Measured-Run Note (April 03, 2026):} In the captured receiver session, \texttt{frame\_ms} was typically around \(1335\,\mathrm{ms}\) (range \(1327\) to \(1387\,\mathrm{ms}\) across reported windows), while \texttt{rtt\_ms} was typically around \(140\,\mathrm{ms}\) (range \(98\) to \(227\,\mathrm{ms}\)). This indicates the dominant delay in that run was not pure RTT, but accumulated queueing/buffering/processing latency.
 
 \subsection{Limitations Relative to Existing Ecosystems}
 \begin{enumerate}[label=\textbf{\arabic*.}, itemsep=6pt]
@@ -568,8 +571,8 @@ and
 \toprule
 Metric & Mean (ms) & p50 (ms) & p95 (ms) & p99 (ms) & Min (ms) & Max (ms) \\
 \midrule
-Frame age latency (\texttt{frame\_ms}) & [fill] & [fill] & [fill] & [fill] & [fill] & [fill] \\
-Feedback RTT (\texttt{rtt\_ms}) & [fill] & [fill] & [fill] & [fill] & [fill] & [fill] \\
+Frame age latency (\texttt{frame\_ms}) & 1335.4 & 1336.9 & 1343.8 & 1343.8 & 1326.7 & 1343.8 \\
+Feedback RTT (\texttt{rtt\_ms}) & 143.1 & 137.2 & 227.2 & 227.2 & 101.3 & 227.2 \\
 \bottomrule
 \end{tabular}
 \end{center}

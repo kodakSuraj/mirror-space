@@ -592,6 +592,7 @@ class FeedbackSender:
         message: str,
         throttle_seconds: float = 1.0,
         throttle_key: Optional[str] = None,
+        verbose: bool = True,
     ):
         now = time.time()
         key = throttle_key if throttle_key is not None else message
@@ -602,7 +603,8 @@ class FeedbackSender:
         try:
             self.sock.sendto(message.encode('utf-8'), (host, port))
             self.last_send_time[key] = now
-            print(f"Feedback sent: {message} -> {host}:{port}")
+            if verbose:
+                print(f"Feedback sent: {message} -> {host}:{port}")
         except Exception as e:
             print(f"Feedback send failed: {e}")
 
@@ -830,7 +832,8 @@ def main():
                     last_hello_log_time = time.time()
             elif selected_stream_ip and selected_stream_feedback_port and not selected_access_id:
                 if not waiting_for_access_id_logged:
-                    print("\n[IMPORTANT] Type the 6-character Session Access ID from broadcaster terminal:")
+                    print("\n[ACTION REQUIRED] Enter Session Access ID in this receiver terminal and press Enter")
+                    print("Session Access ID (6 chars) >")
                     print("Connection Debug: waiting for Session Access ID in terminal")
                     waiting_for_access_id_logged = True
 
@@ -844,6 +847,7 @@ def main():
                     f"LATENCY_PING ts_ns={ping_ts_ns}",
                     throttle_seconds=0.0,
                     throttle_key="LATENCY_PING",
+                    verbose=False,
                 )
                 last_latency_ping_time = now
 
@@ -1009,7 +1013,8 @@ def main():
                         "Connection Debug: manually selected "
                         f"{selected_stream_name} ({selected_stream_ip}:{selected_stream_feedback_port})"
                     )
-                    print("\n[IMPORTANT] Now type the 6-character Session Access ID (check broadcaster terminal)")
+                    print("\n[ACTION REQUIRED] Enter Session Access ID in this receiver terminal and press Enter")
+                    print("Session Access ID (6 chars) >")
                     print("Connection Debug: enter Session Access ID in terminal and press Enter")
 
             # Terminal fallback selection (type 1..9 + Enter)
@@ -1034,7 +1039,8 @@ def main():
                             "Connection Debug: manually selected (terminal) "
                             f"{selected_stream_name} ({selected_stream_ip}:{selected_stream_feedback_port})"
                         )
-                        print("\n[IMPORTANT] Now type the 6-character Session Access ID (check broadcaster terminal)")
+                        print("\n[ACTION REQUIRED] Enter Session Access ID in this receiver terminal and press Enter")
+                        print("Session Access ID (6 chars) >")
                         print("Connection Debug: enter Session Access ID in terminal and press Enter")
                 elif selected_stream_ip and selected_stream_feedback_port:
                     selected_access_id = normalized.upper()
