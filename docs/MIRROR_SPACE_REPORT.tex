@@ -1,7 +1,7 @@
 %============================================================
 %  INDIAN INSTITUTE OF INFORMATION TECHNOLOGY
 %  DESIGN AND MANUFACTURING KURNOOL
-%  Course: Systems and Networked Computing Project
+%  Course: Product Development Practice -  ID351
 %  Topic: Mirror-Space Adaptive Ultra-Low-Latency Streaming Engine
 %============================================================
 
@@ -11,9 +11,8 @@
 % PACKAGES
 %------------------------------------------------------------
 \usepackage[a4paper, top=1in, bottom=1in, left=1in, right=1in]{geometry}
-\usepackage{lmodern}
 \usepackage[T1]{fontenc}
-\usepackage{mathptmx}
+\usepackage{newtxtext,newtxmath}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{amsmath, amssymb, amsthm}
@@ -44,15 +43,15 @@
 %------------------------------------------------------------
 % COLOURS
 %------------------------------------------------------------
-\definecolor{iiitkblue}{RGB}{0, 51, 102}
-\definecolor{iiitkgold}{RGB}{180, 140, 0}
-\definecolor{lightblue}{RGB}{220, 235, 255}
-\definecolor{lightgold}{RGB}{255, 248, 220}
-\definecolor{darkgray}{RGB}{64, 64, 64}
-\definecolor{medgray}{RGB}{128, 128, 128}
-\definecolor{boxbg}{RGB}{245, 248, 255}
-\definecolor{defbg}{RGB}{240, 248, 255}
-\definecolor{thmbg}{RGB}{255, 245, 230}
+\definecolor{iiitkblue}{RGB}{40, 40, 40}
+\definecolor{iiitkgold}{RGB}{90, 90, 90}
+\definecolor{lightblue}{RGB}{244, 244, 244}
+\definecolor{lightgold}{RGB}{238, 238, 238}
+\definecolor{darkgray}{RGB}{32, 32, 32}
+\definecolor{medgray}{RGB}{120, 120, 120}
+\definecolor{boxbg}{RGB}{248, 248, 248}
+\definecolor{defbg}{RGB}{245, 245, 245}
+\definecolor{thmbg}{RGB}{242, 242, 242}
 
 %------------------------------------------------------------
 % PAGE BORDER
@@ -77,9 +76,9 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\color{iiitkblue}\textbf{IIITDM Kurnool}}
-\fancyhead[C]{\small\color{iiitkblue}\textit{Systems and Networked Computing Project}}
+\fancyhead[C]{\small\color{iiitkblue}\textit{Product Development Practice -  ID351}}
 \fancyhead[R]{\small\color{iiitkblue}\textbf{Mirror-Space}}
-\fancyfoot[C]{\small\color{iiitkblue}--- \thepage\ ---}
+\fancyfoot[C]{\small\color{iiitkblue}- \thepage\ -}
 \renewcommand{\headrulewidth}{0.6pt}
 \renewcommand{\footrulewidth}{0.4pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{iiitkblue}\leaders\hrule height \headrulewidth\hfill}}
@@ -117,10 +116,8 @@
 % HYPERREF SETUP
 %------------------------------------------------------------
 \hypersetup{
-  colorlinks=true,
-  linkcolor=iiitkblue,
-  urlcolor=iiitkblue,
-  citecolor=iiitkgold,
+  colorlinks=false,
+  hidelinks,
   pdftitle={Mirror-Space Adaptive Ultra-Low-Latency Streaming Engine},
   pdfauthor={Kousthub J V},
 }
@@ -140,119 +137,111 @@
 \setstretch{1.15}
 
 %------------------------------------------------------------
-% PAGE 1 --- TITLE PAGE
+% PAGE 1 - TITLE PAGE
 %------------------------------------------------------------
-\thispagestyle{fancy}
+\thispagestyle{empty}
 
 \noindent{\color{iiitkblue}\rule{\textwidth}{2.5pt}}\\[-4pt]
 {\color{iiitkgold}\rule{\textwidth}{1pt}}
 
-\vspace{0.25cm}
+\vspace{0.35cm}
 
-% Institute Name
 \begin{center}
-  {\fontsize{17}{21}\selectfont\bfseries\scshape\color{iiitkblue}
-   Indian Institute of Information Technology}\\[3pt]
+  {\fontsize{18}{22}\selectfont\bfseries\scshape\color{iiitkblue}
+  Indian Institute of Information Technology}\\[2pt]
   {\fontsize{15}{19}\selectfont\bfseries\scshape\color{iiitkblue}
-   Design and Manufacturing, Kurnool}
+  Design and Manufacturing, Kurnool}
 \end{center}
 
-\vspace{0.18cm}
-{\color{iiitkgold}\hrule height 1pt}
-\vspace{0.22cm}
+\vspace{0.25cm}
 
-% Institute Logo
 \begin{center}
-  \IfFileExists{iiitdmk logo.jpg}{%
-    {\includegraphics[height=4cm]{iiitdmk logo.jpg}}
+  \IfFileExists{iiitklogo.jpg}{%
+    {\includegraphics[height=4.8cm]{iiitklogo.jpg}}
   }{%
-    \begin{tcolorbox}[colback=lightblue, colframe=iiitkblue, width=0.62\textwidth]
-    \centering\bfseries IIITDM Kurnool Logo Placeholder
+    \begin{tcolorbox}[colback=lightblue, colframe=iiitkblue, width=0.55\textwidth]
+      \centering\bfseries IIITDM Kurnool Logo
     \end{tcolorbox}
   }
 \end{center}
 
-\vspace{0.22cm}
+\vspace{0.3cm}
 
-% Topic Banner
 \begin{center}
+  {\fontsize{14}{18}\selectfont\bfseries\color{darkgray}PROJECT SUBMISSION REPORT}\\[6pt]
   \begin{tcolorbox}[
-    enhanced, width=\textwidth,
-    colback=iiitkblue, colframe=iiitkblue,
-    arc=5pt, boxrule=0pt,
-    top=5pt, bottom=5pt, left=8pt, right=8pt
+    enhanced,
+    width=\textwidth,
+    colback=iiitkblue,
+    colframe=iiitkblue,
+    arc=4pt,
+    boxrule=0.8pt,
+    top=7pt,
+    bottom=7pt,
+    left=8pt,
+    right=8pt
   ]
     \centering
-    {\fontsize{13}{16}\selectfont\bfseries\color{white}
-     Mirror-Space: Adaptive Ultra-Low-Latency Screen Broadcast System}
+    {\fontsize{14}{18}\selectfont\bfseries\color{white}
+    Mirror-Space: Adaptive Ultra-Low-Latency Screen Broadcast System}
   \end{tcolorbox}
 \end{center}
 
-\vspace{0.18cm}
-
-% Two-column: Course Info | Submitted By
-\noindent
-\begin{minipage}[t]{0.49\textwidth}
-\begin{tcolorbox}[
-  enhanced,
-  colback=lightblue, colframe=iiitkblue,
-  arc=5pt, boxrule=1.5pt,
-  boxsep=4pt,
-  left=8pt, right=6pt, top=6pt, bottom=6pt,
-  title={\centering\bfseries\small\scshape Course Details},
-  coltitle=white, colbacktitle=iiitkblue,
-  fonttitle=\small
-]
-\renewcommand{\arraystretch}{1.35}
-\begin{tabular}{@{}
-    >{\bfseries\color{darkgray}\small}l
-    @{\;:\;}
-    >{\color{iiitkblue}\small\bfseries}l @{}}
-  Course    & Systems and Networked Computing Project \\
-  Dept.     & CSE / ECE (Interdisciplinary) \\
-  Institute & IIITDM Kurnool \\
-  Year      & 2025--2026 \\
-\end{tabular}
-\end{tcolorbox}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.49\textwidth}
-\begin{tcolorbox}[
-  enhanced,
-  colback=lightgold, colframe=iiitkgold,
-  arc=5pt, boxrule=1.5pt,
-  boxsep=3pt,
-  left=8pt, right=6pt, top=5pt, bottom=5pt,
-  title={\centering\bfseries\small\scshape Submitted By},
-  coltitle=white, colbacktitle=iiitkgold,
-  fonttitle=\small
-]
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{@{}l@{}}
-{\small\bfseries\color{iiitkblue}[Roll Number]} \\
-{\small\bfseries\color{darkgray}Kousthub J V (GitHub: jvkousthub)} \\
-{\color{iiitkgold!60}\rule{\linewidth}{0.4pt}} \\
-{\small\bfseries\color{iiitkblue}[Team Members]} \\
-{\small\bfseries\color{darkgray}Videsh, Bharadwaj, Suraj}
-\end{tabular}
-\end{tcolorbox}
-\end{minipage}
-
 \vspace{0.25cm}
 
-% Abstract Strip
 \begin{tcolorbox}[
-  enhanced, width=\textwidth,
-  colback=boxbg, colframe=iiitkblue!30,
-  arc=5pt, boxrule=0.8pt,
-  top=5pt, bottom=5pt, left=10pt, right=10pt
+  enhanced,
+  colback=boxbg,
+  colframe=iiitkblue,
+  arc=4pt,
+  boxrule=1pt,
+  left=10pt,
+  right=10pt,
+  top=8pt,
+  bottom=8pt
 ]
-  \small\color{darkgray}
-  \textbf{Abstract.}\enspace
-  Mirror-Space is a LAN-focused, ultra-low-latency screen broadcasting system implemented in Python using block-diff encoding over UDP. This report presents the motivation, prior approaches, uniqueness of the product, and a detailed team contribution audit based on repository commit history and integrated teammate branch work. The implementation roadmap now includes robust discovery, stable receiver-side stream selection, unique broadcaster session identity, and specific-window capture workflows in addition to core differential and motion-aware streaming logic.
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{>{\bfseries\color{darkgray}}l @{: } X}
+Course & Product Development Practice -  ID351 \\
+Department & Computer Science and Engineering \\
+Institute & IIITDM Kurnool \\
+Academic Year & 2025--2026 \\
+\end{tabularx}
 \end{tcolorbox}
 
-\vspace{0.25cm}
+\vspace{0.2cm}
+
+\begin{tcolorbox}[
+  enhanced,
+  colback=lightgold,
+  colframe=iiitkgold,
+  arc=4pt,
+  boxrule=1pt,
+  title={\centering\bfseries Submitted By},
+  coltitle=white,
+  colbacktitle=iiitkgold,
+  left=10pt,
+  right=10pt,
+  top=6pt,
+  bottom=6pt
+]
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{>{\bfseries\color{darkgray}}X >{\raggedleft\arraybackslash\color{iiitkblue}\bfseries}X}
+J V Kousthub & 123CS0074 \\
+Y Sri Rama Bharadwaj & 123CS0030 \\
+K Suraj & 123AD0041 \\
+S Sai Videsh & 523CS0013 \\
+\end{tabularx}
+\end{tcolorbox}
+
+\vfill
+
+\begin{center}
+  {\large\bfseries\color{iiitkblue}IIITDM Kurnool}\\[2pt]
+  {\normalsize\color{darkgray}April 2026}
+\end{center}
+
+\vspace{0.2cm}
 
 {\color{iiitkgold}\hrule height 1pt}
 \vspace{-3pt}
@@ -261,7 +250,7 @@
 \newpage
 
 %------------------------------------------------------------
-% PAGE 2 --- TABLE OF CONTENTS
+% PAGE 2 - TABLE OF CONTENTS
 %------------------------------------------------------------
 \begin{center}
   {\LARGE\bfseries\color{iiitkblue} Table of Contents}\\[4pt]
@@ -327,6 +316,8 @@ The primary engineering objective is to minimize user-perceived delay while reta
 %------------------------------------------------------------
 
 \subsection{Problem Motivation}
+Real-world application examples are needed to validate the usefulness of low-latency local streaming in practical environments.
+
 Traditional remote display tools often optimize for internet-scale interoperability, feature breadth, or enterprise workflows. In such systems, latency can increase due to deep buffering, heavier codecs, protocol overheads, cloud relays, and reliability-first transport behavior.
 
 In contrast, many practical scenarios need \textbf{local network, immediate visual response}:
@@ -465,14 +456,14 @@ Setup weight & Lightweight scripts & Full client ecosystem & Service + configura
 \subsection{Repository-Level Contribution Snapshot}
 Current shortlog across all branches indicates the following author activity:
 \begin{itemize}[leftmargin=*, itemsep=4pt]
-  \item \textbf{Kousthub} (\texttt{jvkousthub} + \texttt{Kousthub J V}): 12 commits in total under two author labels.
+  \item \textbf{Kousthub} (\texttt{Kousthub J V}): 12 commits in total under two author labels.
   \item \textbf{Videsh} (\texttt{Sai-Videsh}): 2 commits.
   \item \textbf{Bharadwaj} (\texttt{ysrbharadwaj}): 3 commits.
 \end{itemize}
 
-\textbf{Normalization Note:} \texttt{jvkousthub} and \texttt{Kousthub J V} are the same maintainer identity configured with two git author names.
 
-\subsection{Kousthub (Maintainer) --- Core System Build and Integration}
+
+\subsection{Kousthub (Maintainer) - Core System Build and Integration}
 Kousthub's contribution spans architecture creation, codec evolution, stability hardening, and integration management. Major contributions include:
 \begin{enumerate}[label=\textbf{\arabic*.}, itemsep=6pt]
   \item \textbf{Initial project foundation}: Set up the repository baseline, core broadcaster/receiver flow, and dependency scaffold.
@@ -483,7 +474,7 @@ Kousthub's contribution spans architecture creation, codec evolution, stability 
   \item \textbf{Team integration ownership}: Merged teammate branch contributions into mainline and resolved main branch consistency during active collaboration.
 \end{enumerate}
 
-\subsection{Videsh --- Discovery UX and Session Identity Workflow}
+\subsection{Videsh - Discovery UX and Session Identity Workflow}
 Videsh's work focused on receiver usability and multi-stream selection behavior in subnet environments. His contributions include:
 \begin{enumerate}[label=\textbf{\arabic*.}, itemsep=6pt]
   \item \textbf{Receiver-side stream selection}: Enabled subnet-visible broadcaster listing and host selection workflow from the receiver side.
@@ -491,32 +482,20 @@ Videsh's work focused on receiver usability and multi-stream selection behavior 
   \item \textbf{Operational flow improvement}: Updated sender/receiver behavior and usage paths so users can discover and attach to the intended host with clearer control.
 \end{enumerate}
 
-\subsection{Bharadwaj --- Region Capture Path and Sensitivity Tuning}
-Bharadwaj's contributions concentrated on window-specific capture and practical tuning for motion sensitivity. Delivered work includes:
+\subsection{Bharadwaj - Region Capture, Specific Window, Sensitivity Tuning}
+Bharadwaj's contributions concentrated on region capture, specific-window capture, and practical sensitivity tuning. Delivered work includes:
 \begin{enumerate}[label=\textbf{\arabic*.}, itemsep=6pt]
-  \item \textbf{Specific-window capture support}: Added and refined region/window-targeted capture capability through dedicated region-selection logic.
-  \item \textbf{Motion detection sensitivity updates}: Tuned motion sensitivity handling to improve responsiveness for selective capture scenarios.
+  \item \textbf{Region capture support}: Added and refined region-targeted capture capability through dedicated region-selection logic.
+  \item \textbf{Specific-window capture support}: Stabilized specific-window targeting for practical, repeatable capture workflows.
+  \item \textbf{Sensitivity tuning updates}: Tuned sensitivity handling to improve responsiveness for selective capture scenarios.
   \item \textbf{Integration across runtime modules}: Updated broadcaster and receiver behavior alongside region-selector support files and configuration dependencies.
   \item \textbf{Finalization iteration}: Performed follow-up fixes to stabilize the specific-window workflow in practical use.
 \end{enumerate}
 
-\subsection{Suraj --- In-Progress Development Track}
-Suraj is currently building upcoming components. Although code is still under development and not fully integrated into the stable branch, his workstream is expected to contribute to the next iteration of runtime features and system capability expansion.
+\subsection{Suraj - Fanout Architecture and PyPI Packaging}
+Suraj architected a \textbf{one-to-many broadcasting model} enabling a single broadcaster to fan out simultaneously to multiple receivers across the network, each authenticated via a cryptographically generated session access ID with automatic stale-connection eviction.
 
-\subsection{Contribution Impact Matrix by Team Member}
-\begin{center}
-\renewcommand{\arraystretch}{1.35}
-\begin{tabular}{>{\bfseries}l|c|c|c}
-\toprule
-Member / Area & Architecture & Runtime Robustness & Product Usability \\
-\midrule
-Kousthub & High & High & High \\
-Videsh & Medium & Medium & High \\
-Bharadwaj & Medium & High & Medium \\
-Suraj (in progress) & Planned & Planned & Planned \\
-\bottomrule
-\end{tabular}
-\end{center}
+He also packaged and published the complete system as a pip-installable Python library (\texttt{mirror-space}) on PyPI, including CLI entry points, a public encoder/decoder API, and end-to-end documentation.
 
 \newpage
 
@@ -587,7 +566,15 @@ Feedback RTT (\texttt{rtt\_ms}) & 143.1 & 137.2 & 227.2 & 227.2 & 101.3 & 227.2 
 
 Mirror-Space demonstrates a practical systems design for LAN-grade, ultra-low-latency screen broadcasting. Its main value lies in an adaptive architecture that treats network variability as a first-class runtime signal. The current team contribution set establishes a strong technical baseline: differential/motion encoding, feedback-controlled key-frame recovery, stream discovery and identity workflows, and refined specific-window capture behavior.
 
-Future work can target encryption, multi-receiver fairness control, remote-control channels, and optional hardware-accelerated codecs while preserving the same latency-first philosophy.
+\subsection{Future Improvements}
+Future work can target the following enhancements while preserving the same latency-first philosophy:
+\begin{itemize}[leftmargin=*, itemsep=4pt]
+  \item Transport security through DTLS or equivalent encrypted channel support.
+  \item Multi-receiver fairness control for stable fanout under mixed network conditions.
+  \item Optional remote-control and audio channels for richer collaboration workflows.
+  \item Hardware-accelerated codec integration as an optional high-performance mode.
+  \item Automated benchmark mode for standardized p50/p95/p99 latency reporting.
+\end{itemize}
 
 \newpage
 
